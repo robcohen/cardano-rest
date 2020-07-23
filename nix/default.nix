@@ -40,9 +40,11 @@ let
       (import ./pkgs.nix)
     ];
 
+  cardano-cli = (import sources.cardano-node {}).cardano-cli;
+
   pkgs = import nixpkgs {
     inherit system crossSystem overlays;
     config = haskellNix.config // config;
   };
 
-in pkgs
+in pkgs // { inherit cardano-cli; }

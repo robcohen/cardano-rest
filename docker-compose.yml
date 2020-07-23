@@ -22,22 +22,24 @@ services:
         max-file: "20"
 
   cardano-node:
-    image: inputoutput/cardano-node:${CARDANO_NODE_VERSION:-latest}
+    image: inputoutput/cardano-node:${CARDANO_NODE_VERSION:-83ba7dba184d3634af78e2879013cf4cc99227d1}
     environment:
-      - NETWORK=${NETWORK}
+      - NETWORK=${NETWORK:-mainnet}
     volumes:
       - node-db:/data/db
       - node-ipc:/ipc
+    restart: on-failure
     logging:
       driver: "json-file"
       options:
-        max-size: "200k"
-        max-file: "10"
+        max-size: "400k"
+        max-file: "20"
 
   cardano-db-sync:
-    image: inputoutput/cardano-db-sync:${CARDANO_DB_SYNC_VERSION:-latest}
+    image: inputoutput/cardano-db-sync:${CARDANO_DB_SYNC_VERSION:-74b329d63c876f8e9fd774e09e071c546cf76980}
     environment:
-      - NETWORK=${NETWORK}
+      - EXTENDED=true
+      - NETWORK=${NETWORK:-mainnet}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
     depends_on:
@@ -93,6 +95,37 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+  
+  cardano-graphql:
+    build:
+      context: .
+      target: server
+    image: inputoutput/cardano-graphql:${CARDANO_GRAPHQL_VERSION:-1.0.0}
+    environment:
+      - CACHE_ENABLED=true
+      - GENESIS_FILE=/configuration/genesis.json
+      - HASURA_URI=http://hasura:8080
+      - CARDANO_NODE_SOCKET_PATH=/node-ipc/node.socket
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - CARDANO_MAGIC=42
+    expose:
+      - 3100
+    ports:
+      - ${API_PORT:-3100}:3100
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    volumes:
+      - node-ipc:/node-ipc
+      - ./app:/app
+      - ./config/network/shelley_testnet:/configuration
 
 secrets:
   postgres_db:

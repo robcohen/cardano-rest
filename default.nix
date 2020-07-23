@@ -52,6 +52,8 @@ let
     inherit (haskellPackages.cardano-submit-api.components.exes)
       cardano-submit-api;
 
+    cardano-cli = pkgs.cardano-cli;
+
     # `tests` are the test suites which have been built.
     tests = collectComponents' "tests" haskellPackages;
     # `benchmarks` (only built, not run).

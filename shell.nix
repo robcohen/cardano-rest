@@ -31,6 +31,9 @@ let
       sqlite-interactive
       tmux
       git
+      cardano-cli
+      nodePackages.node2nix  # Generates a set of Nix expressions from a NPM package's package.json
+      pkgs.nodejs-12_x       # Event-driven I/O framework for the V8 JavaScript engine
     ];
 
     # Prevents cabal from choosing alternate plans, so that
