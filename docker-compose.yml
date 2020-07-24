@@ -34,11 +34,10 @@ services:
         max-size: "200k"
         max-file: "10"
 
-  cardano-db-sync-extended:
-    image: inputoutput/cardano-db-sync:${CARDANO_DB_SYNC_VERSION:-74b329d63c876f8e9fd774e09e071c546cf76980}
+  cardano-db-sync:
+    image: inputoutput/cardano-db-sync:${CARDANO_DB_SYNC_VERSION:-latest}
     environment:
-      - EXTENDED=true
-      - NETWORK=${NETWORK:-mainnet}
+      - NETWORK=${NETWORK}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
     depends_on:
@@ -56,6 +55,45 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+
+  cardano-explorer-api:
+    image: inputoutput/cardano-explorer-api:${CARDANO_EXPLORER_API_VERSION:-latest}
+    depends_on:
+      - postgres
+      - cardano-db-sync
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    secrets:
+      - postgres_password
+      - postgres_user
+      - postgres_db
+    ports:
+      - 8100:8100
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
+  cardano-submit-api:
+    image: inputoutput/cardano-submit-api:${CARDANO_SUBMIT_API_VERSION:-latest}
+    environment:
+      - NETWORK=${NETWORK}
+    depends_on:
+      - cardano-node
+    volumes:
+      - node-ipc:/node-ipc
+    ports:
+      - 8101:8101
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+
   cardano-graphql:
     build:
       context: .
