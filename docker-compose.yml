@@ -2,25 +2,25 @@ version: "3.5"
 
 services:
   postgres:
-    image: postgres:11.5-alpine
+    image: postgres:${POSTGRES_VERSION:-11.5-alpine}
     environment:
       - POSTGRES_LOGGING=true
       - POSTGRES_DB_FILE=/run/secrets/postgres_db
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - POSTGRES_USER_FILE=/run/secrets/postgres_user
     secrets:
+      - postgres_db
       - postgres_password
       - postgres_user
-      - postgres_db
+    shm_size: '2gb'
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     restart: on-failure
     logging:
       driver: "json-file"
       options:
-        max-size: "400k"
-        max-file: "20"
-
+        max-size: "200k"
+        max-file: "10"
   cardano-node:
     image: inputoutput/cardano-node:${CARDANO_NODE_VERSION:-83ba7dba184d3634af78e2879013cf4cc99227d1}
     environment:
@@ -34,8 +34,7 @@ services:
       options:
         max-size: "400k"
         max-file: "20"
-
-  cardano-db-sync:
+  cardano-db-sync-extended:
     image: inputoutput/cardano-db-sync:${CARDANO_DB_SYNC_VERSION:-74b329d63c876f8e9fd774e09e071c546cf76980}
     environment:
       - EXTENDED=true
@@ -57,45 +56,6 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-
-  cardano-explorer-api:
-    image: inputoutput/cardano-explorer-api:${CARDANO_EXPLORER_API_VERSION:-latest}
-    depends_on:
-      - postgres
-      - cardano-db-sync
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-    secrets:
-      - postgres_password
-      - postgres_user
-      - postgres_db
-    ports:
-      - 8100:8100
-    restart: on-failure
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-
-  cardano-submit-api:
-    image: inputoutput/cardano-submit-api:${CARDANO_SUBMIT_API_VERSION:-latest}
-    environment:
-      - NETWORK=${NETWORK}
-    depends_on:
-      - cardano-node
-    volumes:
-      - node-ipc:/node-ipc
-    ports:
-      - 8101:8101
-    restart: on-failure
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-  
   cardano-graphql:
     build:
       context: .
@@ -126,7 +86,6 @@ services:
       - node-ipc:/node-ipc
       - ./app:/app
       - ./config/network/shelley_testnet:/configuration
-
 secrets:
   postgres_db:
     file: ./config/postgres_db
@@ -134,8 +93,7 @@ secrets:
     file: ./config/postgres_password
   postgres_user:
     file: ./config/postgres_user
-
 volumes:
-  postgres:
   node-db:
   node-ipc:
+  postgres-data:

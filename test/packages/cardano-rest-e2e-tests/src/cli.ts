@@ -75,6 +75,7 @@ export class Client {
 
   getUTXO (address: Address): Array<UTXO> {
     const stdout = execSync(`${this.cardanoCli} shelley query utxo --address ${address} --testnet-magic 42`).toString()
+    console.log(stdout)
     const rowToUtxo = function (row: string) {
       const fields = row.trim().split(/\W+/)
       return {
