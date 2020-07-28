@@ -1,5 +1,5 @@
 ############
-cardano-node
+cardano-rest
 ############
 
 .. include:: ../README.rst
